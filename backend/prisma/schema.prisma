@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id String @id @default(uuid())
+  first_name String @db.VarChar(50)
+  last_name String  @db.VarChar(50)
+  email String @unique 
+  phone String @unique @db.VarChar(20)
+  hash_password String @db.VarChar(255)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  medical_profiles MedicalProfile[]
+  orders Order[]
+}
+
+model MedicalProfile {
+  id String @id @default(uuid())
+  first_name String @db.VarChar(50)
+  last_name String  @db.VarChar(50)
+  address String @db.VarChar(255)
+  birth_date DateTime
+  size Decimal @db.Decimal(5,2)
+  weight Decimal @db.Decimal(5,2)
+  blood_type BloodType
+  sex Sex
+  allergies Json
+  emergency_contact Json
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user_id String
+  user User @relation(fields: [user_id],references: [id])
+
+  qr_code QrCode?
+  orders Order[] 
+
+}
+
+model QrCode {
+  id String @id @default(uuid())
+  status QrStatus
+  hash_signature String @db.VarChar(255)
+  scan_count Int @default(0)
+  last_scanned_at DateTime?
+
+  created_at DateTime @default(now())
+
+  medical_profile_id String @unique
+  medical_profile MedicalProfile @relation(fields: [medical_profile_id],references: [id])
+}
+
+model Partner {
+  id          String   @id @default(uuid())
+  name        String
+  type        PartnerType
+  phone       String   @db.VarChar(20)
+  email       String?
+  active      Boolean  @default(true)
+
+  orders      Order[]
+}
+
+model Order {
+  id String @id @default(uuid())
+  price Decimal @db.Decimal(10,2)
+
+  created_at DateTime @default(now())
+
+  partner_id String?
+  partner Partner? @relation(fields: [partner_id], references: [id])
+
+  user_id String
+  user User @relation(fields: [user_id], references: [id])
+
+  medical_profile_id String @unique
+  medical_profile MedicalProfile @relation(fields: [medical_profile_id], references: [id])
+}
+
+
+
+enum BloodType {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+enum QrStatus {
+  PENDING 
+  IN_PROCESS
+  ACTIVE
+  REVOKED
+}
+
+enum PartnerType {
+  SCHOOL
+  NGO
+  GYM
+  HOSPITAL
+  OTHER
+}
