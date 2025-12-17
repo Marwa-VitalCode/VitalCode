@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
@@ -14,85 +14,126 @@ datasource db {
 }
 
 model User {
-  id String @id @default(uuid())
-  first_name String @db.VarChar(50)
-  last_name String  @db.VarChar(50)
-  email String @unique 
-  phone String @unique @db.VarChar(20)
+  id            String @id @default(uuid())
+  first_name    String @db.VarChar(50)
+  last_name     String @db.VarChar(50)
+  email         String @unique
+  phone         String @unique @db.VarChar(20)
   hash_password String @db.VarChar(255)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   medical_profiles MedicalProfile[]
-  orders Order[]
+  orders           Order[]
 }
 
 model MedicalProfile {
-  id String @id @default(uuid())
-  first_name String @db.VarChar(50)
-  last_name String  @db.VarChar(50)
-  address String @db.VarChar(255)
-  birth_date DateTime
-  size Decimal @db.Decimal(5,2)
-  weight Decimal @db.Decimal(5,2)
-  blood_type BloodType
-  sex Sex
-  allergies Json
+  id                String    @id @default(uuid())
+  first_name        String    @db.VarChar(50)
+  last_name         String    @db.VarChar(50)
+  address           String    @db.VarChar(255)
+  birth_date        DateTime
+  size              Decimal   @db.Decimal(5, 2)
+  weight            Decimal   @db.Decimal(5, 2)
+  blood_type        BloodType
+  sex               Sex
+  allergies         String[]
+  alzheimer         Boolean
+  epilepsy          Boolean
   emergency_contact Json
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   user_id String
-  user User @relation(fields: [user_id],references: [id])
+  user    User   @relation(fields: [user_id], references: [id])
 
-  qr_code QrCode?
-  orders Order[] 
+  qr_code           QrCode?
+  orders            Order[]
+  medicalTreatments MedicalTreatment[]
+}
 
+model MedicalTreatment {
+  id              String @id @default(uuid())
+  disease_name    String @db.VarChar(100)
+  medication_name String @db.VarChar(100)
+
+  dosage    String @db.VarChar(100)
+  frequency String @db.VarChar(100)
+
+  start_date DateTime?
+  end_date   DateTime?
+
+  is_active  Boolean @default(true)
+  is_visible Boolean @default(true)
+  notes      String? @db.Text
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  medical_profile_id String
+  medical_profile    MedicalProfile @relation(fields: [medical_profile_id], references: [id])
+  doctor_id          String
+  doctor             Doctor         @relation(fields: [doctor_id], references: [id])
+}
+
+model Doctor {
+  id String @id @default(uuid())
+
+  first_name String          @db.VarChar(50)
+  last_name  String          @db.VarChar(50)
+  specialty  DoctorSpecialty
+
+  phone String  @db.VarChar(20)
+  email String?
+
+  active Boolean @default(true)
+
+  treatments MedicalTreatment[]
+
+  created_at DateTime @default(now())
 }
 
 model QrCode {
-  id String @id @default(uuid())
-  status QrStatus
-  hash_signature String @db.VarChar(255)
-  scan_count Int @default(0)
+  id              String    @id @default(uuid())
+  status          QrStatus
+  hash_signature  String    @db.VarChar(255)
+  scan_count      Int       @default(0)
   last_scanned_at DateTime?
 
   created_at DateTime @default(now())
 
-  medical_profile_id String @unique
-  medical_profile MedicalProfile @relation(fields: [medical_profile_id],references: [id])
+  medical_profile_id String         @unique
+  medical_profile    MedicalProfile @relation(fields: [medical_profile_id], references: [id])
 }
 
 model Partner {
-  id          String   @id @default(uuid())
-  name        String
-  type        PartnerType
-  phone       String   @db.VarChar(20)
-  email       String?
-  active      Boolean  @default(true)
+  id     String      @id @default(uuid())
+  name   String
+  type   PartnerType
+  phone  String      @db.VarChar(20)
+  email  String?
+  active Boolean     @default(true)
 
-  orders      Order[]
+  orders Order[]
 }
 
 model Order {
-  id String @id @default(uuid())
-  price Decimal @db.Decimal(10,2)
+  id    String  @id @default(uuid())
+  price Decimal @db.Decimal(10, 2)
 
   created_at DateTime @default(now())
 
   partner_id String?
-  partner Partner? @relation(fields: [partner_id], references: [id])
+  partner    Partner? @relation(fields: [partner_id], references: [id])
 
   user_id String
-  user User @relation(fields: [user_id], references: [id])
+  user    User   @relation(fields: [user_id], references: [id])
 
-  medical_profile_id String @unique
-  medical_profile MedicalProfile @relation(fields: [medical_profile_id], references: [id])
+  medical_profile_id String         @unique
+  medical_profile    MedicalProfile @relation(fields: [medical_profile_id], references: [id])
 }
-
-
 
 enum BloodType {
   A_POSITIVE
@@ -109,7 +150,7 @@ enum Sex {
 }
 
 enum QrStatus {
-  PENDING 
+  PENDING
   IN_PROCESS
   ACTIVE
   REVOKED
@@ -120,5 +161,39 @@ enum PartnerType {
   NGO
   GYM
   HOSPITAL
+  OTHER
+}
+
+enum DoctorSpecialty {
+  GENERAL_PRACTITIONER // Médecin généraliste
+  PEDIATRICIAN // Pédiatre
+  CARDIOLOGIST
+  DERMATOLOGIST
+  NEUROLOGIST
+  PSYCHIATRIST
+  PSYCHOLOGIST
+  ENDOCRINOLOGIST
+  GASTROENTEROLOGIST
+  PULMONOLOGIST
+  NEPHROLOGIST
+  RHEUMATOLOGIST
+  ONCOLOGIST
+  HEMATOLOGIST
+  INFECTIOUS_DISEASE
+  ALLERGIST
+  OPHTHALMOLOGIST
+  OTOLARYNGOLOGIST // ORL
+  ORTHOPEDIST
+  TRAUMATOLOGIST
+  SURGEON
+  ANESTHESIOLOGIST
+  RADIOLOGIST
+  EMERGENCY_PHYSICIAN
+  SPORTS_MEDICINE
+  GYNECOLOGIST
+  OBSTETRICIAN
+  UROLOGIST
+  DENTIST
+  PHARMACOLOGIST
   OTHER
 }
