@@ -7,6 +7,7 @@ import errorHandler from "./middlewares/error.middleware.js";
 
 // routes
 import MedicalProfileRoutes from "./modules/medicalProfile/medicalProfile.route.js";
+import MedicalTreatmentRoutes from "./modules/medicalTreatment/medicalTreatment.route.js";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/medical_profiles", MedicalProfileRoutes);
+app.use("/api/v1/medical_treatments", MedicalTreatmentRoutes);
 
 // Middleware global d'erreur : **toujours en dernier**
 app.use(errorHandler);

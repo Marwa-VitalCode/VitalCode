@@ -1,10 +1,9 @@
 import AppError from "../../errors/AppError.js";
 import { prisma } from "../../lib/prisma.js";
 
-import {
-  MedicalProfileSchema,
-  TreatmentsArraySchema,
-} from "./medicalProfile.validator.js";
+import { MedicalProfileSchema } from "./medicalProfile.validator.js";
+
+import { TreatmentsArraySchema } from "../medicalTreatment/medicalTreatment.validator.js";
 
 export class MedicalProfileService {
   constructor(medicalProfileRepository) {
@@ -97,6 +96,34 @@ export class MedicalProfileService {
     });
 
     return profile;
+  }
+
+  async updateById(user_id, profile_id, data) {
+    const profile = await this.getById(user_id, profile_id);
+    if (!profile) {
+      throw new AppError("Profile médical non trouvé", 404);
+    }
+
+    const { value, error } = MedicalProfileSchema.validate(data, {
+      abortEarly: false,
+      convert: true,
+    });
+
+    if (error) {
+      throw new AppError(
+        "Données de profil médical invalides",
+        400,
+        error.details.map((d) => d.message).join(", ")
+      );
+    }
+
+    const updated_profile = await this.medicalProfileRepository.updateOne(
+      user_id,
+      profile_id,
+      value
+    );
+
+    return updated_profile;
   }
 
   async deleteById(user_id, profile_id) {
